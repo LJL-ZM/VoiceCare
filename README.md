@@ -1,53 +1,53 @@
-# VoiceCare - 阿尔茨海默病早期风险分层系统
+# AI 面试准备助手
 
-## 项目简介
+帮助求职者准备面试的 AI 应用。
 
-VoiceCare 通过老人每天几分钟的自然语音交互，进行阿尔茨海默病（AD/MCI）早期纵向风险分层，并生成大白话简报给子女。只做风险分诊，不输出临床诊断。
-
-## 创新点
-
-1. **多场景自然采集**：看图说话、故事复述、语音信箱，降低认知负荷，采集多维信号
-2. **纵向基线偏离**：对比老人自己的历史基线，抓出持续变差的早期趋势
-3. **可解释 AI 与 Agent 简报**：SHAP 输出归因，大模型生成大白话行动建议
-
-## 系统架构
+## 项目结构
 
 ```
-鸿蒙真机（ArkTS）→ 华为云 ECS（FastAPI）→ 华为云 MaaS（语音转写）→ 算法微服务（Python）→ 华为云 RDS（存指标、比对历史）→ 盘古大模型 API（生成简报）→ 返回 JSON 给鸿蒙端渲染
+interview-prep-agent/
+├── backend/           # 后端服务
+│   ├── main.py        # FastAPI 入口
+│   └── requirements.txt
+├── frontend/          # 前端页面
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+├── docs/              # 申报书
+│   └── README.md
+└── README.md          # 项目说明
 ```
 
-## 团队分工
+## 快速开始
 
-| 成员 | 角色 | 负责模块 |
-|------|------|----------|
-| 孟浩 | 算法 | 特征提取、分类模型与 SHAP、基线偏离判定 |
-| 刘嘉龙 | 后端与云 | FastAPI 服务、MaaS/盘古对接、RDS/OBS |
-| 罗元源 | 鸿蒙端与产品 | ArkTS App、老人端/照护者端、申报书与答辩材料 |
+### 启动后端
 
-## 目录结构
-
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
 ```
-VoiceCare/
-├── backend_api/      # 刘嘉龙：FastAPI 服务、MaaS 调用
-├── client_app/       # 罗元源：鸿蒙 ArkTS
-├── core_algorithm/   # 孟浩：特征提取、模型脚本
-├── docs/             # 罗元源：申报书、答辩材料、接口文档
-└── videos/           # 开发录屏与演示视频（本地存储，不进 Git）
+
+### 启动前端
+
+```bash
+cd frontend
+python -m http.server 8080
 ```
+
+访问 http://localhost:8080
 
 ## 技术栈
 
-| 层级 | 技术选型 |
-|------|----------|
-| 端 | HarmonyOS ArkTS、Core Speech Kit |
-| 云 | 华为云 ECS、RDS、OBS |
-| 智 | MaaS 语音转写、librosa/jieba、SVM/随机森林 + SHAP、盘古大模型 |
+- 前端：HTML + CSS + JavaScript
+- 后端：FastAPI
+- AI：盘古大模型
+
+## 团队
+
+- 刘嘉龙：全栈开发
 
 ## 赛程
 
-| 节点 | 时间 | 状态 |
-|------|------|------|
-| 报名 | 2026-08-31 ~ 11-30 | 待确认 |
-| 初赛 | 2026-12 | 未开始 |
-| 中国总决赛 | 2027-03 | 未开始 |
-| 全球总决赛 | 2027-05 | 未开始 |
+- 华为 ICT 大赛 · 创新赛 · 赛题一
+- 初赛提交：2026-12

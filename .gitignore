@@ -1,41 +1,13 @@
-# VoiceCare .gitignore
-
 # 测试音频
 *.wav
 *.mp3
 *.m4a
-*.ogg
-*.flac
-
-# 视频文件
-*.mp4
-*.mov
-*.avi
-*.mkv
-*.flv
-*.wmv
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
 venv/
 ENV/
 env/
@@ -48,34 +20,26 @@ env/
 *.pth
 *.h5
 *.model
-*.bin
 
 # 华为云配置
 .env
 *.pem
 *.key
 credentials.json
-*.secret
 
-# Node/HarmonyOS
+# Node
 node_modules/
 oh_modules/
-/build/
-/.hvigor/
-*.hprof
-entry/build/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-*~.npp
 
 # 操作系统
 .DS_Store
 Thumbs.db
-desktop.ini
 
 # 日志
 *.log
@@ -84,13 +48,7 @@ logs/
 # 临时文件
 *.tmp
 *.bak
-*.swp
-*~.npp
 
 # 数据库
 *.db
 *.sqlite
-
-# 其他
-.DS_Store
-Thumbs.db
