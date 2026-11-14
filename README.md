@@ -32,19 +32,16 @@ VoiceCare/
 ├── client_app/       # 罗元源：鸿蒙 ArkTS
 ├── core_algorithm/   # 孟浩：特征提取、模型脚本
 ├── docs/             # 罗元源：申报书、答辩材料、接口文档
-├── .gitignore
-└── README.md
+└── videos/           # 开发录屏与演示视频（本地存储，不进 Git）
 ```
 
-## 接口契约
+## 技术栈
 
-详见 `docs/api_contract.md`
-
-## 开发环境
-
-- Python 3.11+
-- Node.js 24+
-- HarmonyOS SDK
+| 层级 | 技术选型 |
+|------|----------|
+| 端 | HarmonyOS ArkTS、Core Speech Kit |
+| 云 | 华为云 ECS、RDS、OBS |
+| 智 | MaaS 语音转写、librosa/jieba、SVM/随机森林 + SHAP、盘古大模型 |
 
 ## 赛程
 
