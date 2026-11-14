@@ -1,7 +1,8 @@
 const API_BASE_URL = 'http://localhost:8000';
 let currentProfile = null;
 let currentPage = 'home';
-let majorCategories = {};
+let token = localStorage.getItem('token') || null;
+let userId = localStorage.getItem('user_id') || null;
 
 // 页面模板
 const pages = {
@@ -27,6 +28,12 @@ const pages = {
                 <p>与 AI 对话，练习常见面试问题，获取针对性建议</p>
             </div>
             
+            <div class="home-card" onclick="navigateTo('companies')">
+                <div class="icon">🏢</div>
+                <h3>公司推荐</h3>
+                <p>根据目标城市和行业，为你推荐优质公司</p>
+            </div>
+            
             <div class="home-card" onclick="navigateTo('history')">
                 <div class="icon">📋</div>
                 <h3>历史记录</h3>
@@ -39,11 +46,64 @@ const pages = {
                 <h2>💡 使用指南</h2>
             </div>
             <ul style="line-height: 2; color: var(--text-secondary); font-size: 14px;">
-                <li>1. 先在「我的画像」中配置你的专业和求职目标</li>
-                <li>2. 在「面试对话」中练习面试问题</li>
-                <li>3. 查看「历史记录」回顾练习内容</li>
-                <li>4. 配置目标公司后，AI 会给出定制化建议</li>
+                <li>1. 先注册/登录账号</li>
+                <li>2. 在「我的画像」中配置你的专业和求职目标</li>
+                <li>3. 在「面试对话」中练习面试问题</li>
+                <li>4. 在「公司推荐」中查看适合你的公司</li>
             </ul>
+        </div>
+    `,
+
+    login: `
+        <div class="card" style="max-width: 400px; margin: 50px auto;">
+            <div class="card-header">
+                <h2>🔐 登录</h2>
+            </div>
+            
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="loginUsername" placeholder="输入用户名">
+            </div>
+            
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="loginPassword" placeholder="输入密码">
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%;" onclick="login()">登录</button>
+            
+            <p style="text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-tertiary);">
+                还没有账号？<a href="#register" style="color: var(--accent);">注册</a>
+            </p>
+        </div>
+    `,
+
+    register: `
+        <div class="card" style="max-width: 400px; margin: 50px auto;">
+            <div class="card-header">
+                <h2>📝 注册</h2>
+            </div>
+            
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="registerUsername" placeholder="输入用户名">
+            </div>
+            
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="registerEmail" placeholder="输入邮箱">
+            </div>
+            
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="registerPassword" placeholder="输入密码（至少6位）">
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%;" onclick="register()">注册</button>
+            
+            <p style="text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-tertiary);">
+                已有账号？<a href="#login" style="color: var(--accent);">登录</a>
+            </p>
         </div>
     `,
 
@@ -83,6 +143,26 @@ const pages = {
             
             <div class="form-row">
                 <div class="form-group">
+                    <label>目标城市</label>
+                    <input type="text" id="targetCity" placeholder="如：北京、上海、深圳">
+                </div>
+                
+                <div class="form-group">
+                    <label>行业偏好</label>
+                    <select id="industry">
+                        <option value="">选择行业</option>
+                        <option value="互联网">互联网</option>
+                        <option value="金融">金融</option>
+                        <option value="教育">教育</option>
+                        <option value="医疗">医疗</option>
+                        <option value="制造">制造</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
                     <label>目标公司</label>
                     <select id="targetCompany" onchange="updateTargetBadge()">
                         <option value="">选择目标公司</option>
@@ -107,26 +187,6 @@ const pages = {
                 <div class="form-group">
                     <label>期望薪资</label>
                     <input type="text" id="expectedSalary" placeholder="如：15k-20k">
-                </div>
-                
-                <div class="form-group">
-                    <label>工作地点</label>
-                    <input type="text" id="workLocation" placeholder="如：北京、上海">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label>行业偏好</label>
-                    <select id="industry">
-                        <option value="">选择行业</option>
-                        <option value="互联网">互联网</option>
-                        <option value="金融">金融</option>
-                        <option value="教育">教育</option>
-                        <option value="医疗">医疗</option>
-                        <option value="制造">制造</option>
-                        <option value="其他">其他</option>
-                    </select>
                 </div>
                 
                 <div class="form-group">
@@ -213,6 +273,42 @@ const pages = {
         </div>
     `,
 
+    companies: `
+        <div class="card">
+            <div class="card-header">
+                <h2>🏢 公司推荐</h2>
+            </div>
+            <p style="color: var(--text-tertiary); font-size: 13px;">根据你的目标城市和行业，为你推荐优质公司</p>
+        </div>
+        
+        <div class="card" style="padding: 20px;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>目标城市</label>
+                    <input type="text" id="recommendCity" placeholder="如：北京、上海、深圳" onchange="loadRecommendations()">
+                </div>
+                
+                <div class="form-group">
+                    <label>行业</label>
+                    <select id="recommendIndustry" onchange="loadRecommendations()">
+                        <option value="">所有行业</option>
+                        <option value="互联网">互联网</option>
+                        <option value="金融">金融</option>
+                        <option value="教育">教育</option>
+                        <option value="医疗">医疗</option>
+                        <option value="制造">制造</option>
+                        <option value="智能硬件">智能硬件</option>
+                        <option value="新能源">新能源</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="companies-list" id="companiesList">
+            <p style="text-align: center; color: var(--text-tertiary); padding: 40px;">选择城市和行业查看推荐公司</p>
+        </div>
+    `,
+
     history: `
         <div class="card">
             <div class="card-header">
@@ -227,23 +323,37 @@ const pages = {
 
 // 初始化应用
 function init() {
+    // 检查登录状态
+    if (token && userId) {
+        document.getElementById('navLogin').style.display = 'none';
+        document.getElementById('navLogout').style.display = 'flex';
+    } else {
+        document.getElementById('navLogin').style.display = 'flex';
+        document.getElementById('navLogout').style.display = 'none';
+    }
+    
     // 监听路由变化
     window.addEventListener('hashchange', handleRoute);
     
     // 初始加载
     handleRoute();
     
-    // 加载用户画像
-    loadProfile();
-    
-    // 加载历史记录
-    loadHistory();
+    // 如果已登录，加载用户画像
+    if (token && userId) {
+        loadProfile();
+    }
 }
 
 // 处理路由
 function handleRoute() {
     const hash = window.location.hash || '#home';
     const page = hash.substring(1);
+    
+    // 检查是否需要登录
+    if (['profile', 'chat', 'companies', 'history'].includes(page) && !token) {
+        window.location.hash = '#login';
+        return;
+    }
     
     if (pages[page]) {
         currentPage = page;
@@ -258,15 +368,19 @@ function handleRoute() {
             }
         });
         
-        // 如果是画像页面，更新专业列表
-        if (page === 'profile' && currentProfile) {
-            if (currentProfile.major_category) {
-                document.getElementById('majorCategory').value = currentProfile.major_category;
-                updateMajorSelect();
-                if (currentProfile.major) {
-                    document.getElementById('major').value = currentProfile.major;
-                }
-            }
+        // 如果是画像页面，加载画像
+        if (page === 'profile' && token) {
+            loadProfile();
+        }
+        
+        // 如果是公司推荐页面，加载推荐
+        if (page === 'companies' && token) {
+            loadRecommendations();
+        }
+        
+        // 如果是历史记录页面，加载历史
+        if (page === 'history' && token) {
+            loadHistory();
         }
     }
 }
@@ -274,6 +388,90 @@ function handleRoute() {
 // 导航到指定页面
 function navigateTo(page) {
     window.location.hash = page;
+}
+
+// 注册
+async function register() {
+    const username = document.getElementById('registerUsername').value;
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    
+    if (!username || !email || !password) {
+        alert('请填写所有字段');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.code === 200) {
+            alert('注册成功！请登录');
+            window.location.hash = '#login';
+        } else {
+            alert(data.detail || '注册失败');
+        }
+    } catch (error) {
+        alert('注册失败，请重试');
+    }
+}
+
+// 登录
+async function login() {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!username || !password) {
+        alert('请填写用户名和密码');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.code === 200) {
+            // 保存 token 和 user_id
+            token = data.token;
+            userId = data.user_id;
+            localStorage.setItem('token', token);
+            localStorage.setItem('user_id', userId);
+            
+            // 更新导航
+            document.getElementById('navLogin').style.display = 'none';
+            document.getElementById('navLogout').style.display = 'flex';
+            
+            // 跳转到首页
+            window.location.hash = '#home';
+        } else {
+            alert(data.detail || '登录失败');
+        }
+    } catch (error) {
+        alert('登录失败，请重试');
+    }
+}
+
+// 登出
+function logout() {
+    token = null;
+    userId = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user_id');
+    
+    document.getElementById('navLogin').style.display = 'flex';
+    document.getElementById('navLogout').style.display = 'none';
+    
+    window.location.hash = '#home';
 }
 
 // 更新专业选择列表
@@ -304,26 +502,24 @@ function updateMajorSelect() {
     }
 }
 
-// 更新聊天专业
-function updateChatMajor() {
-    // 可以在这里添加专业相关的提示
-}
-
 // 加载用户画像
 async function loadProfile() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/profile`);
+        const response = await fetch(`${API_BASE_URL}/api/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
         const data = await response.json();
         
         if (data.data) {
             currentProfile = data.data;
             document.getElementById('school').value = currentProfile.school || '';
             document.getElementById('majorCategory').value = currentProfile.major_category || '';
+            document.getElementById('targetCity').value = currentProfile.target_city || '';
+            document.getElementById('industry').value = currentProfile.industry || '';
             document.getElementById('targetCompany').value = currentProfile.target_company || '';
             document.getElementById('targetPosition').value = currentProfile.target_position || '';
             document.getElementById('expectedSalary').value = currentProfile.expected_salary || '';
-            document.getElementById('workLocation').value = currentProfile.work_location || '';
-            document.getElementById('industry').value = currentProfile.industry || '';
             document.getElementById('experienceYears').value = currentProfile.experience_years || 0;
             document.getElementById('skills').value = currentProfile.skills || '';
             document.getElementById('selfEvaluation').value = currentProfile.self_evaluation || '';
@@ -349,11 +545,11 @@ async function saveProfile() {
         school: document.getElementById('school').value,
         major: document.getElementById('major').value,
         major_category: document.getElementById('majorCategory').value,
+        target_city: document.getElementById('targetCity').value,
+        industry: document.getElementById('industry').value,
         target_company: document.getElementById('targetCompany').value,
         target_position: document.getElementById('targetPosition').value,
         expected_salary: document.getElementById('expectedSalary').value,
-        work_location: document.getElementById('workLocation').value,
-        industry: document.getElementById('industry').value,
         experience_years: parseInt(document.getElementById('experienceYears').value) || 0,
         skills: document.getElementById('skills').value,
         self_evaluation: document.getElementById('selfEvaluation').value,
@@ -365,6 +561,7 @@ async function saveProfile() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(profile)
         });
@@ -393,6 +590,11 @@ function updateTargetBadge() {
     }
 }
 
+// 更新聊天专业
+function updateChatMajor() {
+    // 可以在这里添加专业相关的提示
+}
+
 // 提问
 async function ask() {
     const input = document.getElementById('questionInput');
@@ -415,6 +617,7 @@ async function ask() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ 
                 question: question,
@@ -430,9 +633,6 @@ async function ask() {
         
         // 添加机器人消息
         addMessage('bot', data.answer);
-        
-        // 保存到历史
-        loadHistory();
         
     } catch (error) {
         removeLoading(loadingId);
@@ -461,7 +661,6 @@ function addMessage(sender, text) {
     
     const avatar = sender === 'bot' ? '🤖' : '👤';
     
-    // 处理换行
     let formattedText = text.replace(/\n/g, '<br>');
     
     messageDiv.innerHTML = `
@@ -507,26 +706,64 @@ function removeLoading(id) {
     }
 }
 
+// 加载公司推荐
+async function loadRecommendations() {
+    const city = document.getElementById('recommendCity').value;
+    const industry = document.getElementById('recommendIndustry').value;
+    
+    try {
+        const params = new URLSearchParams();
+        if (city) params.append('city', city);
+        if (industry) params.append('industry', industry);
+        
+        const response = await fetch(`${API_BASE_URL}/api/companies/recommend?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await response.json();
+        
+        const list = document.getElementById('companiesList');
+        if (data.data && data.data.length > 0) {
+            list.innerHTML = data.data.map(company => `
+                <div class="company-item">
+                    <div class="company-header">
+                        <h3>${company.name}</h3>
+                        <span class="tag">${company.city}</span>
+                        <span class="tag">${company.industry}</span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-top: 8px;">${company.description}</p>
+                    <a href="${company.website}" target="_blank" style="color: var(--accent); font-size: 13px; margin-top: 8px; display: inline-block;">官网 →</a>
+                </div>
+            `).join('');
+        } else {
+            list.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 40px;">没有找到匹配的公司</p>';
+        }
+    } catch (error) {
+        console.log('加载推荐失败');
+    }
+}
+
 // 加载历史记录
 async function loadHistory() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/history`);
+        const response = await fetch(`${API_BASE_URL}/api/history`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
         const data = await response.json();
         
         if (data.data && data.data.length > 0) {
             const historyList = document.getElementById('historyList');
-            if (historyList) {
-                historyList.innerHTML = data.data.map(item => `
-                    <div class="history-item">
-                        <div class="question">${item.question}</div>
-                        <div class="answer">${item.answer}</div>
-                        <div class="meta">
-                            <span>${new Date(item.created_at).toLocaleString()}</span>
-                            <span class="score">${item.score || 90}分</span>
-                        </div>
+            historyList.innerHTML = data.data.map(item => `
+                <div class="history-item">
+                    <div class="question">${item.question}</div>
+                    <div class="answer">${item.answer}</div>
+                    <div class="meta">
+                        <span>${new Date(item.created_at).toLocaleString()}</span>
+                        <span class="score">${item.score || 90}分</span>
                     </div>
-                `).join('');
-            }
+                </div>
+            `).join('');
         }
     } catch (error) {
         console.log('加载历史失败');
