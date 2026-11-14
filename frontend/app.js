@@ -1,13 +1,17 @@
 const API_BASE_URL = 'http://localhost:8000';
 let currentProfile = null;
 let currentPage = 'home';
+let majorCategories = {};
 
 // 页面模板
 const pages = {
     home: `
         <div class="card">
-            <h2>🎯 欢迎使用 AI 面试准备助手</h2>
-            <p style="color: var(--text-light); margin-top: 10px;">帮助你准备面试，提升求职成功率</p>
+            <div class="card-header">
+                <h2>🎯 欢迎使用 AI 面试准备助手</h2>
+            </div>
+            <p style="color: var(--text-secondary); margin-top: 10px;">帮助你准备面试，提升求职成功率</p>
+            <p style="color: var(--text-tertiary); margin-top: 8px; font-size: 13px;">支持理工科、文史类、经管类、法学类、教育类、医学类、艺术类、农学类等专业</p>
         </div>
         
         <div class="home-cards">
@@ -30,10 +34,12 @@ const pages = {
             </div>
         </div>
         
-        <div class="card" style="margin-top: 25px;">
-            <h2 style="margin-bottom: 15px;">💡 使用指南</h2>
-            <ul style="line-height: 2; color: var(--text-light);">
-                <li>1. 先在「我的画像」中配置你的信息</li>
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header">
+                <h2>💡 使用指南</h2>
+            </div>
+            <ul style="line-height: 2; color: var(--text-secondary); font-size: 14px;">
+                <li>1. 先在「我的画像」中配置你的专业和求职目标</li>
                 <li>2. 在「面试对话」中练习面试问题</li>
                 <li>3. 查看「历史记录」回顾练习内容</li>
                 <li>4. 配置目标公司后，AI 会给出定制化建议</li>
@@ -54,8 +60,25 @@ const pages = {
             </div>
             
             <div class="form-group">
-                <label>专业</label>
-                <input type="text" id="major" placeholder="输入你的专业">
+                <label>专业类别</label>
+                <select id="majorCategory" onchange="updateMajorSelect()">
+                    <option value="">选择专业类别</option>
+                    <option value="理工科">理工科</option>
+                    <option value="文史类">文史类</option>
+                    <option value="经管类">经管类</option>
+                    <option value="法学类">法学类</option>
+                    <option value="教育类">教育类</option>
+                    <option value="医学类">医学类</option>
+                    <option value="艺术类">艺术类</option>
+                    <option value="农学类">农学类</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>具体专业</label>
+                <select id="major">
+                    <option value="">先选择专业类别</option>
+                </select>
             </div>
             
             <div class="form-row">
@@ -76,7 +99,7 @@ const pages = {
                 
                 <div class="form-group">
                     <label>目标岗位</label>
-                    <input type="text" id="targetPosition" placeholder="如：前端开发">
+                    <input type="text" id="targetPosition" placeholder="如：前端开发、会计、教师">
                 </div>
             </div>
             
@@ -88,7 +111,7 @@ const pages = {
                 
                 <div class="form-group">
                     <label>工作地点</label>
-                    <input type="text" id="workLocation" placeholder="如：北京">
+                    <input type="text" id="workLocation" placeholder="如：北京、上海">
                 </div>
             </div>
             
@@ -99,9 +122,9 @@ const pages = {
                         <option value="">选择行业</option>
                         <option value="互联网">互联网</option>
                         <option value="金融">金融</option>
-                        <option value="制造业">制造业</option>
                         <option value="教育">教育</option>
                         <option value="医疗">医疗</option>
+                        <option value="制造">制造</option>
                         <option value="其他">其他</option>
                     </select>
                 </div>
@@ -120,7 +143,7 @@ const pages = {
             
             <div class="form-group">
                 <label>技能标签</label>
-                <input type="text" id="skills" placeholder="如：Python, JavaScript, React">
+                <input type="text" id="skills" placeholder="如：Python, JavaScript, 会计从业资格证">
             </div>
             
             <div class="form-group">
@@ -136,6 +159,30 @@ const pages = {
     `,
 
     chat: `
+        <div class="card">
+            <div class="card-header">
+                <h2>💬 面试对话</h2>
+            </div>
+            <p style="color: var(--text-tertiary); font-size: 13px;">选择专业类别后，可以练习专业相关的面试问题</p>
+        </div>
+        
+        <div class="card" style="padding: 20px;">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-size: 12px;">当前专业类别</label>
+                <select id="chatMajorCategory" onchange="updateChatMajor()" style="padding: 10px 14px; font-size: 13px;">
+                    <option value="">通用面试问题</option>
+                    <option value="理工科">理工科</option>
+                    <option value="文史类">文史类</option>
+                    <option value="经管类">经管类</option>
+                    <option value="法学类">法学类</option>
+                    <option value="教育类">教育类</option>
+                    <option value="医学类">医学类</option>
+                    <option value="艺术类">艺术类</option>
+                    <option value="农学类">农学类</option>
+                </select>
+            </div>
+        </div>
+        
         <div class="chat-container" id="chatContainer">
             <div class="message bot">
                 <div class="avatar">🤖</div>
@@ -144,10 +191,10 @@ const pages = {
                     <p>我可以帮助你准备面试，包括：</p>
                     <ul>
                         <li>回答常见面试问题</li>
-                        <li>提供针对性的面试建议</li>
+                        <li>提供专业相关的面试问题</li>
                         <li>根据目标公司定制回答</li>
                     </ul>
-                    <p>请在左侧配置你的画像，然后开始提问吧！</p>
+                    <p>请先选择你的专业类别，然后开始提问吧！</p>
                 </div>
             </div>
         </div>
@@ -172,7 +219,7 @@ const pages = {
                 <h2>📋 历史记录</h2>
             </div>
             <div class="history-list" id="historyList">
-                <p style="text-align: center; color: var(--text-light); padding: 40px;">暂无历史记录</p>
+                <p style="text-align: center; color: var(--text-tertiary); padding: 40px;">暂无历史记录</p>
             </div>
         </div>
     `
@@ -211,9 +258,15 @@ function handleRoute() {
             }
         });
         
-        // 如果是聊天页面，加载历史
-        if (page === 'chat') {
-            loadHistory();
+        // 如果是画像页面，更新专业列表
+        if (page === 'profile' && currentProfile) {
+            if (currentProfile.major_category) {
+                document.getElementById('majorCategory').value = currentProfile.major_category;
+                updateMajorSelect();
+                if (currentProfile.major) {
+                    document.getElementById('major').value = currentProfile.major;
+                }
+            }
         }
     }
 }
@@ -221,6 +274,39 @@ function handleRoute() {
 // 导航到指定页面
 function navigateTo(page) {
     window.location.hash = page;
+}
+
+// 更新专业选择列表
+function updateMajorSelect() {
+    const category = document.getElementById('majorCategory').value;
+    const majorSelect = document.getElementById('major');
+    
+    const majors = {
+        "理工科": ["计算机科学", "电子信息", "机械工程", "土木工程", "化学工程", "材料科学", "数学", "物理学", "生物科学", "环境工程", "软件工程", "通信工程", "自动化"],
+        "文史类": ["汉语言文学", "历史学", "哲学", "新闻传播学", "英语", "日语", "翻译", "广告学"],
+        "经管类": ["会计学", "金融学", "工商管理", "市场营销", "人力资源管理", "财务管理", "国际经济与贸易", "经济学"],
+        "法学类": ["法学", "社会学", "政治学与行政学", "思想政治教育"],
+        "教育类": ["教育学", "学前教育", "小学教育", "体育教育", "教育技术学"],
+        "医学类": ["临床医学", "护理学", "药学", "口腔医学", "预防医学", "中医学"],
+        "艺术类": ["音乐学", "美术学", "艺术设计", "舞蹈学", "戏剧影视文学", "视觉传达设计"],
+        "农学类": ["农学", "林学", "动物医学", "园艺", "植物保护"],
+    };
+    
+    majorSelect.innerHTML = '<option value="">选择具体专业</option>';
+    
+    if (category && majors[category]) {
+        majors[category].forEach(major => {
+            const option = document.createElement('option');
+            option.value = major;
+            option.textContent = major;
+            majorSelect.appendChild(option);
+        });
+    }
+}
+
+// 更新聊天专业
+function updateChatMajor() {
+    // 可以在这里添加专业相关的提示
 }
 
 // 加载用户画像
@@ -232,7 +318,7 @@ async function loadProfile() {
         if (data.data) {
             currentProfile = data.data;
             document.getElementById('school').value = currentProfile.school || '';
-            document.getElementById('major').value = currentProfile.major || '';
+            document.getElementById('majorCategory').value = currentProfile.major_category || '';
             document.getElementById('targetCompany').value = currentProfile.target_company || '';
             document.getElementById('targetPosition').value = currentProfile.target_position || '';
             document.getElementById('expectedSalary').value = currentProfile.expected_salary || '';
@@ -242,6 +328,13 @@ async function loadProfile() {
             document.getElementById('skills').value = currentProfile.skills || '';
             document.getElementById('selfEvaluation').value = currentProfile.self_evaluation || '';
             document.getElementById('strengths').value = currentProfile.strengths || '';
+            
+            if (currentProfile.major_category) {
+                updateMajorSelect();
+                if (currentProfile.major) {
+                    document.getElementById('major').value = currentProfile.major;
+                }
+            }
             
             updateTargetBadge();
         }
@@ -255,6 +348,7 @@ async function saveProfile() {
     const profile = {
         school: document.getElementById('school').value,
         major: document.getElementById('major').value,
+        major_category: document.getElementById('majorCategory').value,
         target_company: document.getElementById('targetCompany').value,
         target_position: document.getElementById('targetPosition').value,
         expected_salary: document.getElementById('expectedSalary').value,
@@ -293,7 +387,7 @@ function updateTargetBadge() {
     const badge = document.getElementById('targetBadge');
     
     if (company) {
-        badge.innerHTML = `<span style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🎯 ${company}</span>`;
+        badge.innerHTML = `<span class="company-badge">🎯 ${company}</span>`;
     } else {
         badge.innerHTML = '';
     }
@@ -315,6 +409,7 @@ async function ask() {
     
     try {
         const targetCompany = document.getElementById('targetCompany').value;
+        const majorCategory = document.getElementById('chatMajorCategory').value;
         
         const response = await fetch(`${API_BASE_URL}/api/ask`, {
             method: 'POST',
@@ -323,7 +418,8 @@ async function ask() {
             },
             body: JSON.stringify({ 
                 question: question,
-                target_company: targetCompany
+                target_company: targetCompany,
+                major_category: majorCategory
             })
         });
         
@@ -388,7 +484,13 @@ function showLoading() {
     
     loadingDiv.innerHTML = `
         <div class="avatar">🤖</div>
-        <div class="text">思考中...</div>
+        <div class="text">
+            <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
     `;
     
     container.appendChild(loadingDiv);
