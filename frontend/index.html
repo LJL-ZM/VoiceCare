@@ -7,34 +7,44 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>AI 面试准备助手</h1>
-            <p>帮你准备面试，提升求职成功率</p>
-        </header>
-        
-        <main>
-            <div class="chat-container" id="chatContainer">
-                <div class="message bot">
-                    <div class="avatar">🤖</div>
-                    <div class="text">你好！我是面试准备助手。你可以问我关于面试的问题。</div>
-                </div>
+    <div class="app">
+        <!-- 侧边栏导航 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🎯 面试助手</h2>
             </div>
-            
-            <div class="input-container">
-                <input type="text" id="questionInput" placeholder="输入你的问题..." autofocus>
-                <button onclick="ask()">发送</button>
+            <nav class="sidebar-nav">
+                <a href="#home" class="nav-link active" data-page="home">
+                    <span class="icon">🏠</span>
+                    <span class="label">首页</span>
+                </a>
+                <a href="#profile" class="nav-link" data-page="profile">
+                    <span class="icon">👤</span>
+                    <span class="label">我的画像</span>
+                </a>
+                <a href="#chat" class="nav-link" data-page="chat">
+                    <span class="icon">💬</span>
+                    <span class="label">面试对话</span>
+                </a>
+                <a href="#history" class="nav-link" data-page="history">
+                    <span class="icon">📋</span>
+                    <span class="label">历史记录</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="top-bar">
+                <h1 id="pageTitle">首页</h1>
+                <div id="targetBadge"></div>
             </div>
-            
-            <div class="quick-questions">
-                <button onclick="quickAsk('自我介绍')">自我介绍</button>
-                <button onclick="quickAsk('你的优点是什么')">你的优点是什么</button>
-                <button onclick="quickAsk('你的缺点是什么')">你的缺点是什么</button>
-                <button onclick="quickAsk('为什么选择我们公司')">为什么选择我们公司</button>
+            <div class="content" id="pageContent">
+                <!-- 页面内容动态加载 -->
             </div>
         </main>
     </div>
-    
+
     <script src="app.js"></script>
 </body>
 </html>
